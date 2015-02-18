@@ -1,6 +1,6 @@
 from setuptools import setup
 from sys import version_info
-from helga-queue.version import VERSION
+from helga_queue.version import VERSION
 
 with open('README.rst') as file:
     long_description = file.read()
