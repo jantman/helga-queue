@@ -27,7 +27,7 @@ setup(
     author_email='jason@jasonantman.com',
     packages=['helga_queue', 'helga_queue.tests'],
     url='http://github.com/jantman/helga-queue/',
-    description='Simple queue plugin for Helga IRC bot.',
+    description='A simple helga IRC bot plugin to let you manage a short queue (FIFO) of strings (eg. todo items).',
     long_description=long_description,
     install_requires=requires,
     keywords="helga queue todo irc",

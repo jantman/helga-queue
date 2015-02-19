@@ -23,35 +23,23 @@ helga-queue
    :alt: Project Status: Active - The project has reached a stable, usable state and is being actively developed.
    :target: http://www.repostatus.org/#active
 
-Introduction here.
+A simple `helga <https://github.com/shaunduncan/helga>`_ IRC bot plugin to let you manage a short queue (FIFO) of strings (eg. todo items).
 
 Requirements
 ------------
 
-* Python 2.7+ (currently tested with 2.7, 3.2, 3.3, 3.4)
-* Python `VirtualEnv <http://www.virtualenv.org/>`_ and ``pip`` (recommended installation method; your OS/distribution should have packages for these)
+* Python 2.6 or 2.7 (Helga requirement)
+* `helga <https://github.com/shaunduncan/helga>`_ with DB configured and working.
 
 Installation
 ------------
 
-It's recommended that you install into a virtual environment (virtualenv /
-venv). See the `virtualenv usage documentation <http://www.virtualenv.org/en/latest/>`_
-for information on how to create a venv. If you really want to install
-system-wide, you can (using sudo).
-
-.. code-block:: bash
-
-    pip install helga-queue
-
-Configuration
--------------
-
-Something here.
+See `Installing Plugins <http://helga.readthedocs.org/en/latest/plugins.html#installing-plugins>`_ in the Helga docs.
 
 Usage
 -----
 
-Something else here.
+This needs to be filled in. For now, ``helga queue help``.
 
 Bugs and Feature Requests
 -------------------------

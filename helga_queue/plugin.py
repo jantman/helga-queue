@@ -8,7 +8,10 @@ queue of to-do items.
 from helga.plugins import command
 from helga.db import db
 
-# handlers
+#######################
+# subcommand handlers #
+#######################
+
 def handle_list(client, channel, nick, queue_name, args):
     q = _get_queue(queue_name)
     if channel != nick:
@@ -17,7 +20,8 @@ def handle_list(client, channel, nick, queue_name, args):
 
 def handle_append(client, channel, nick, queue_name, args):
     queue = _get_queue(queue_name)
-    queue.append(' '.join(args))
+    item = ' '.join(args)
+    queue.append(item)
     return _set_queue(queue_name, queue)
 
 def handle_len(client, channel, nick, queue_name, args):
@@ -28,7 +32,9 @@ def handle_next(client, channel, nick, queue_name, args):
     q = _get_queue(nick)
     return "Next item in queue {q}: {i}".format(i=q[0], q=queue_name)
 
-# internal functions
+######################
+# internal functions #
+######################
 
 def _get_queue(name):
     """
@@ -46,7 +52,7 @@ def _get_queue(name):
 def _set_queue(name, q):
     try:
         db.helga_queue.save({'_id': name, 'queue': q})
-        return "Queue '{n}' updated".format(n=name)
+        return "queue '{n}' updated".format(n=name)
     except:
         return "ERROR - update to queue '{n}' failed".format(n=name)
 

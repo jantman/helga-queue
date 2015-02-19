@@ -91,7 +91,7 @@ class TestPlugin:
     def test_set_queue(self, mock_db):
         mock_db.helga_queue.save.return_value = True
         result = helga_queue.plugin._set_queue('qname', ['zero', 'one', 'two'])
-        assert result == "Queue 'qname' updated"
+        assert result == "queue 'qname' updated"
         assert mock_db.mock_calls == [call.helga_queue.save({'_id': 'qname', 'queue': ['zero', 'one', 'two']})]
 
     @patch('helga_queue.plugin.db')
@@ -155,3 +155,19 @@ class TestPlugin:
             call.msg('mynick', 'myqrepr')
         ]
         assert mock_repr.mock_calls == [call('qname', ['zero', 'one', 'two'])]
+
+    """
+    Remaining:
+    pop(i=0)
+    prepend
+    insert(i=0)
+    find(str)
+    show - same as list but in-channel
+    last - show last item in queue
+    get(i=0)
+    empty - delete everything
+    push - alias to append
+    jump(i=1) bring i to the front
+    demote(i=0) push i back one place
+    makelast(i=0) push i to the back of the queue
+    """
