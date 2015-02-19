@@ -1,7 +1,7 @@
 [run]
 branch = True
 omit = lib/*
-       helga-queue/tests/*
+       helga_queue/tests/*
        setup.py
 
 [report]
