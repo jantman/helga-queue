@@ -18,6 +18,26 @@ def handle_list(client, channel, nick, queue_name, args):
         client.me(channel, 'whispers to {0} all {1} items in queue'.format(nick, len(q)))
     client.msg(nick, _queue_repr(queue_name, q))
 
+def handle_show(client, channel, nick, queue_name, args):
+    q = _get_queue(queue_name)
+    return _queue_repr(queue_name, q)
+
+def handle_pop(client, channel, nick, queue_name, args):
+    idx = 0
+    if len(args) > 0:
+        try:
+            idx = int(args[0])
+        except ValueError:
+            return "ERROR - {a} is not a valid index (int)".format(a=args[0])
+    q = _get_queue(queue_name)
+    if len(q) == 0:
+        return "Queue {n} is empty.".format(n=queue_name)
+    if idx >= len(q):
+        return "ERROR - there are only {c} items in queue qname".format(c=len(q))
+    val = q.pop(idx)
+    _set_queue(queue_name, q)
+    return "Popped item {i} from queue {n}: '{v}'".format(n=queue_name, v=val, i=idx)
+
 def handle_append(client, channel, nick, queue_name, args):
     queue = _get_queue(queue_name)
     item = ' '.join(args)

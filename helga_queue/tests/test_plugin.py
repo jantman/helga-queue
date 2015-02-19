@@ -129,10 +129,8 @@ class TestPlugin:
 
     @patch('helga_queue.plugin._queue_repr')
     @patch('helga_queue.plugin._get_queue')
-    @patch('helga_queue.plugin._set_queue')
-    def test_handle_list_inchannel(self, mock_set, mock_get, mock_repr):
+    def test_handle_list_inchannel(self, mock_get, mock_repr):
         mock_get.return_value = ['zero', 'one', 'two']
-        mock_set.return_value = 'setreturn'
         mock_client = Mock()
         mock_repr.return_value = 'myqrepr'
         helga_queue.plugin.handle_list(mock_client, 'chname', 'mynick', 'qname', [])
@@ -144,10 +142,8 @@ class TestPlugin:
 
     @patch('helga_queue.plugin._queue_repr')
     @patch('helga_queue.plugin._get_queue')
-    @patch('helga_queue.plugin._set_queue')
-    def test_handle_list_inpm(self, mock_set, mock_get, mock_repr):
+    def test_handle_list_inpm(self, mock_get, mock_repr):
         mock_get.return_value = ['zero', 'one', 'two']
-        mock_set.return_value = 'setreturn'
         mock_client = Mock()
         mock_repr.return_value = 'myqrepr'
         helga_queue.plugin.handle_list(mock_client, 'mynick', 'mynick', 'qname', [])
@@ -156,13 +152,69 @@ class TestPlugin:
         ]
         assert mock_repr.mock_calls == [call('qname', ['zero', 'one', 'two'])]
 
+    @patch('helga_queue.plugin._queue_repr')
+    @patch('helga_queue.plugin._get_queue')
+    def test_handle_show(self, mock_get, mock_repr):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_client = Mock()
+        mock_repr.return_value = 'myqrepr'
+        result = helga_queue.plugin.handle_show(mock_client, 'chname', 'mynick', 'qname', [])
+        assert mock_client.mock_calls == []
+        assert mock_repr.mock_calls == [call('qname', ['zero', 'one', 'two'])]
+        assert result == 'myqrepr'
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_pop(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_pop(None, None, None, 'qname', [])
+        assert result == "Popped item 0 from queue qname: 'zero'"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['one', 'two'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_pop_empty(self, mock_set, mock_get):
+        mock_get.return_value = []
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_pop(None, None, None, 'qname', [])
+        assert result == 'Queue qname is empty.'
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_pop_index(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_pop(None, None, None, 'qname', ['1'])
+        assert result == "Popped item 1 from queue qname: 'one'"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['zero', 'two'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_pop_invalid_index(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_pop(None, None, None, 'qname', [8])
+        assert result == 'ERROR - there are only 3 items in queue qname'
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_pop_nonint_index(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_pop(None, None, None, 'qname', ['foo'])
+        assert result == "ERROR - foo is not a valid index (int)"
+
+    def test_help(self):
+        # need to figure out some __doc__-based help for subcommands
+        raise NotImplementedError()
     """
     Remaining:
-    pop(i=0)
     prepend
     insert(i=0)
     find(str)
-    show - same as list but in-channel
     last - show last item in queue
     get(i=0)
     empty - delete everything
