@@ -8,6 +8,28 @@ queue of to-do items.
 from helga.plugins import command
 from helga.db import db
 
+# handlers
+def handle_list(client, channel, nick, queue_name, args):
+    q = _get_queue(queue_name)
+    if channel != nick:
+        client.me(channel, 'whispers to {0} all {1} items in queue'.format(nick, len(q)))
+    client.msg(nick, _queue_repr(queue_name, q))
+
+def handle_append(client, channel, nick, queue_name, args):
+    queue = _get_queue(queue_name)
+    queue.append(' '.join(args))
+    return _set_queue(queue_name, queue)
+
+def handle_len(client, channel, nick, queue_name, args):
+    q = _get_queue(nick)
+    return "{i} items in queue {q}".format(i=len(q), q=queue_name)
+
+def handle_next(client, channel, nick, queue_name, args):
+    q = _get_queue(nick)
+    return "Next item in queue {q}: {i}".format(i=q[0], q=queue_name)
+
+# internal functions
+
 def _get_queue(name):
     """
     Return the contents of a queue
@@ -21,41 +43,29 @@ def _get_queue(name):
         return []
     return res['queue']
 
-def _set_queue(name, q, last=''):
+def _set_queue(name, q):
     try:
-        db.helga_queue.save({'_id': name, 'queue': q, 'last': ''})
+        db.helga_queue.save({'_id': name, 'queue': q})
         return "Queue '{n}' updated".format(n=name)
     except:
         return "ERROR - update to queue '{n}' failed".format(n=name)
 
-def _queue_add(name, s):
-    """ append s to name's queue """
-    queue = _get_queue(name)
-    queue.append(s)
-    return _set_queue(name, queue)
-
-def _queue_repr(nick, q):
-    s = 'Contents of queue "{n}":\n'.format(n=nick)
+def _queue_repr(name, q):
+    if len(q) == 0:
+        return 'Queue "{n}" is empty.'.format(n=name)
+    s = 'Contents of queue "{n}":\n'.format(n=name)
     for idx, item in enumerate(q):
         s += '{idx}. {item}\n'.format(idx=idx, item=item)
     return s
 
-def handle_list(client, channel, nick, queue_name, args):
-    q = _get_queue(nick)
-    if channel != nick:
-        client.me(channel, 'whispers to {0} all {1} items in queue'.format(nick, len(q)))
-    client.msg(nick, _queue_repr(nick, q))
-
-def handle_add(client, channel, nick, queue_name, args):
-    return _queue_add(nick, ' '.join(args))
-
-def handle_len(client, channel, nick, queue_name, args):
-    q = _get_queue(nick)
-    return "{i} items in queue {q}".format(i=len(q), q=nick)
-
-def handle_next(client, channel, nick, queue_name, args):
-    q = _get_queue(nick)
-    return "Next item in queue {q}: {i}".format(i=q[0], q=nick)
+def _commands_dict():
+    """return a dict of all subcommands to their handler functions"""
+    commands = {}
+    for funcname, fn in globals().iteritems():
+        if not funcname.startswith('handle_'):
+            continue
+        commands[funcname[7:]] = fn
+    return commands
 
 @command('queue', help='Keep a simple queue of to-do items. Usage: queue help')
 def queue_plugin(client, channel, nick, message, cmd, args):
@@ -68,11 +78,7 @@ def queue_plugin(client, channel, nick, message, cmd, args):
         args = ['list']
 
     # find all of our commands
-    commands = {}
-    for funcname, fn in globals().iteritems():
-        if not funcname.startswith('handle_'):
-            continue
-        commands[funcname[6:]] = fn
+    commands = _commands_dict()
 
     if len(args) > 1 and args[1] in commands:
         # queue name and subcommand
