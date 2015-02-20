@@ -106,12 +106,12 @@ def queue_plugin(client, channel, nick, message, cmd, args):
     # find all of our commands
     commands = _commands_dict()
 
-    if len(args) > 1 and args[1] in commands:
+    if args[0] in commands:
+        queue = nick
+        cmdname = args.pop(0)
+    elif len(args) > 1 and args[1] in commands:
         # queue name and subcommand
         queue = args.pop(0)
-        cmdname = args.pop(0)
-    elif args[0] in commands:
-        queue = nick
         cmdname = args.pop(0)
     else:
         return "queue subcommand '{s}' not known - please use 'queue help' for available commands".format(s=args[0])

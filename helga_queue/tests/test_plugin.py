@@ -180,6 +180,8 @@ class TestPlugin:
         mock_set.return_value = 'setreturn'
         result = helga_queue.plugin.handle_pop(None, None, None, 'qname', [])
         assert result == 'Queue qname is empty.'
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
 
     @patch('helga_queue.plugin._get_queue')
     @patch('helga_queue.plugin._set_queue')
@@ -198,6 +200,8 @@ class TestPlugin:
         mock_set.return_value = 'setreturn'
         result = helga_queue.plugin.handle_pop(None, None, None, 'qname', [8])
         assert result == 'ERROR - there are only 3 items in queue qname'
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
 
     @patch('helga_queue.plugin._get_queue')
     @patch('helga_queue.plugin._set_queue')
@@ -206,20 +210,388 @@ class TestPlugin:
         mock_set.return_value = 'setreturn'
         result = helga_queue.plugin.handle_pop(None, None, None, 'qname', ['foo'])
         assert result == "ERROR - foo is not a valid index (int)"
+        assert mock_get.mock_calls == []
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_insert_no_index(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_insert(None, None, None, 'qname', ['foo', 'bar', 'baz'])
+        assert result == "ERROR - first argument to insert must be an integer index"
+        assert mock_get.mock_calls == []
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_insert(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_insert(None, None, None, 'qname', ['2', 'foo', 'bar', 'baz'])
+        assert result == "Inserted into queue qname at index 2: 'foo bar baz'"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['zero', 'one', 'foo bar baz', 'two'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_insert_past_end(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_insert(None, None, None, 'qname', ['6', 'foo', 'bar', 'baz'])
+        assert result == "ERROR - queue qname only has 3 elements, cannot insert at index 6"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_prepend(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_prepend(None, None, None, 'qname', ['foo', 'bar', 'baz'])
+        assert result == "Prepended to queue qname: 'foo bar baz'"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['foo bar baz', 'zero', 'one', 'two'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_last(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_last(None, None, None, 'qname', [])
+        assert result == "Last item in queue qname (length 3): 'two'"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_last_empty(self, mock_set, mock_get):
+        mock_get.return_value = []
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_last(None, None, None, 'qname', [])
+        assert result == "Queue qname is empty."
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_empty(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_empty(None, None, None, 'qname', ['everything'])
+        assert result == "Deleted all items from queue qname"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', [])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_empty_already(self, mock_set, mock_get):
+        mock_get.return_value = []
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_empty(None, None, None, 'qname', ['everything'])
+        assert result == "Queue qname is already empty"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_empty_noarg(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_empty(None, None, None, 'qname', [])
+        assert result == "ERROR - to empty queue, use 'queue empty everything'"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_get(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_get(None, None, None, 'qname', ['2'])
+        assert result == "Queue qname item 2: 'two'"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_get_empty(self, mock_set, mock_get):
+        mock_get.return_value = []
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_get(None, None, None, 'qname', ['2'])
+        assert result == "Queue qname is empty"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_get_pastend(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_get(None, None, None, 'qname', ['6'])
+        assert result == "ERROR - queue qname only has 3 elements, cannot get index 6"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_get_no_index(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_get(None, None, None, 'qname', [])
+        assert result == "Queue qname item 0: 'zero'"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_get_nonint_index(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_get(None, None, None, 'qname', ['foo'])
+        assert result == "ERROR - index must be an integer; 'foo' is invalid"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_jump(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_jump(None, None, None, 'qname', ['2'])
+        assert result == "Queue qname item 2 moved to front"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['two', 'zero', 'one'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_jump_noarg(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_jump(None, None, None, 'qname', [])
+        assert result == "ERROR - 'jump' requires index to move to front"
+        assert mock_get.mock_calls == []
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_jump_past_end(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_jump(None, None, None, 'qname', ['6'])
+        assert result == "ERROR - queue qname only has 3 elements, cannot jump index 6"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_jump_nonint(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_jump(None, None, None, 'qname', ['foo'])
+        assert result == "ERROR - index nust be an integer; 'foo' is invalid"
+        assert mock_get.mock_calls == []
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_demote(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_demote(None, None, None, 'qname', ['1'])
+        assert result == "Queue qname item 1 demoted"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['zero', 'two', 'one'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_demote_noarg(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_demote(None, None, None, 'qname', [])
+        assert result == "Queue qname item 0 demoted"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['one', 'zero', 'two'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_demote_nonint(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_demote(None, None, None, 'qname', ['foo'])
+        assert result == "ERROR - index must be an integer; 'foo' is invalid"
+        assert mock_get.mock_calls == []
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_demote_pastend(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_demote(None, None, None, 'qname', ['6'])
+        assert result == "ERROR - queue qname only has 3 items; cannot demote index 6"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_makelast(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_makelast(None, None, None, 'qname', ['1'])
+        assert result == "Queue qname item 1 moved to end"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['zero', 'two', 'one'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_makelast_noarg(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_makelast(None, None, None, 'qname', [])
+        assert result == "Queue qname item 0 moved to end"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['one', 'two', 'zero'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_makelast_nonint(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_makelast(None, None, None, 'qname', ['foo'])
+        assert result == "ERROR - index must be an integer; 'foo' is invalid"
+        assert mock_get.mock_calls == []
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_makelast_pastend(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_makelast(None, None, None, 'qname', ['6'])
+        assert result == "ERROR - queue qname only has 3 items; cannot move index 6"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_move(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_move(None, None, None, 'qname', ['0', '2'])
+        assert result == "Queue qname item 0 moved to position 2"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['one', 'two', 'zero'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_move_from_pastend(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_move(None, None, None, 'qname', ['6', '2'])
+        assert result == "ERROR - queue qname only has 3 items; cannot move index 6"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_move_to_pastend(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_move(None, None, None, 'qname', ['0', '6'])
+        assert result == "ERROR - queue qname only has 3 items; cannot move to index 6"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_nonint(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_move(None, None, None, 'qname', ['foo', '2'])
+        assert result == "ERROR - index must be an integer; 'foo' is invalid"
+        result = helga_queue.plugin.handle_move(None, None, None, 'qname', ['1', 'bar'])
+        assert result == "ERROR - index must be an integer; 'bar' is invalid"
+        assert mock_get.mock_calls == []
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_move2(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two', 'three', 'four', 'five']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_move(None, None, None, 'qname', ['1', '5'])
+        assert result == "Queue qname item 0 moved to position 2"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['zero', 'two', 'three', 'four', 'five', 'one'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_move3(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two', 'three', 'four', 'five']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_move(None, None, None, 'qname', ['4', '1'])
+        assert result == "Queue qname item 0 moved to position 2"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == [call('qname', ['zero', 'four', 'one', 'two', 'three', 'five'])]
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_find_str(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two', 'three', 'four', 'five']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_find(None, None, None, 'qname', ['two'])
+        assert result == "Queue qname (len=6) item 'two' is at index 2"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_find_str_notfound(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two', 'three', 'four', 'five']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_find(None, None, None, 'qname', ['foo'])
+        assert result == "Queue qname (len=6) does not contain 'foo'"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_find_substr(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two', 'three', 'four', 'five']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_find(None, None, None, 'qname', ['fiv'])
+        assert result == "Queue qname (len=6) contains 'fiv' in item 'five' is at index 5"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_find_str_multiple(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two', 'three', 'four', 'two']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_find(None, None, None, 'qname', ['two'])
+        raise NotImplementedError()
+        assert result == "Queue qname (len=6) item 'two' is at index 2"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_find_substr_multiple(self, mock_set, mock_get):
+        mock_get.return_value = ['zero', 'one', 'two', 'notfour', 'four', 'five']
+        mock_set.return_value = 'setreturn'
+        result = helga_queue.plugin.handle_find(None, None, None, 'qname', ['four'])
+        raise NotImplementedError()
+        assert result == "Queue qname (len=6) item 'two' is at index 2"
+        assert mock_get.mock_calls == [call('qname')]
+        assert mock_set.mock_calls == []
+
+    @patch('helga_queue.plugin._get_queue')
+    @patch('helga_queue.plugin._set_queue')
+    def test_handle_find_re(self, mock_set, mock_get):
+        raise NotImplementedError()
 
     def test_help(self):
         # need to figure out some __doc__-based help for subcommands
         raise NotImplementedError()
-    """
-    Remaining:
-    prepend
-    insert(i=0)
-    find(str)
-    last - show last item in queue
-    get(i=0)
-    empty - delete everything
-    push - alias to append
-    jump(i=1) bring i to the front
-    demote(i=0) push i back one place
-    makelast(i=0) push i to the back of the queue
-    """
