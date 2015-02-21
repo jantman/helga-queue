@@ -587,11 +587,25 @@ class TestPlugin:
         assert mock_get.mock_calls == [call('qname')]
         assert mock_set.mock_calls == []
 
-    @patch('helga_queue.plugin._get_queue')
-    @patch('helga_queue.plugin._set_queue')
-    def test_handle_find_re(self, mock_set, mock_get):
-        raise NotImplementedError()
+    @patch('helga_queue.plugin._commands_dict')
+    def test_help(self, mock_cd):
+        def func1():
+            """doc for func1"""
+            return None
 
-    def test_help(self):
-        # need to figure out some __doc__-based help for subcommands
-        raise NotImplementedError()
+        def func2():
+            """doc for func2"""
+            return True
+
+        expected = "USAGE: queue [queue name] [subcommand] [args [...]]\n" + \
+                   "Subcommands:\n" + \
+                   "func1 - doc for func1\n" + \
+                   "func2 - doc for func2\n" + \
+                   "another2 - doc for func2\n"
+        mock_cd.return_value = {'func1': func1, 'func2': func2, 'another2': func2}
+        mock_client = Mock()
+        res = helga_queue.plugin.handle_help(mock_client, 'chan', 'mynick', None, [])
+        assert mock_client.mock_calls == [
+            call.me('chname', 'whispers to mynick'),
+            call.msg('mynick', expected)
+        ]
