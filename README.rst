@@ -19,11 +19,14 @@ helga-queue
    :target: https://codecov.io/github/jantman/helga-queue?branch=master
    :alt: coverage report for master branch
 
-.. image:: http://www.repostatus.org/badges/0.1.0/active.svg
-   :alt: Project Status: Active - The project has reached a stable, usable state and is being actively developed.
-   :target: http://www.repostatus.org/#active
+.. image:: http://www.repostatus.org/badges/0.1.0/abandoned.svg
+   :alt: Project Status: Abandoned - Initial development has started, but there has not yet been a stable, usable release; the project has been abandoned and the author(s) do not intend on continuing development.
+   :target: http://www.repostatus.org/#abandoned
 
 A simple `helga <https://github.com/shaunduncan/helga>`_ IRC bot plugin to let you manage a short queue (FIFO) of strings (eg. todo items).
+
+**Status:** I started work on this, and then switched to using `Trello <http://trello.com>`_ for the same purpose. Some basic commands
+are finished, but I don't intend on continuing work any time in the near future. Sorry.
 
 Requirements
 ------------
